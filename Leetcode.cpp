@@ -965,11 +965,10 @@ namespace LC{
     };
 
     /**
-     * description: 戳气球求所能获得硬币的最大数量。
+     * description: 戳气球求所能获得硬币的最大数量
      * @date 4/9 15.07
      */
     class SolutionMaxCoins {
-
         vector<vector<int>> rec;
         vector<int> val;
     public:
@@ -981,16 +980,17 @@ namespace LC{
             if (rec[left][right] != -1) {
                 return rec[left][right];
             }
+
             for (int i = left + 1; i < right; i++) {
                 int sum = val[left] * val[i] * val[right];
                 sum += solve(left, i) + solve(i, right);
-
                 rec[left][right] = max(rec[left][right], sum);
             }
             return rec[left][right];
         }
 
         int maxCoins(const vector<int>& nums) {
+            //方法１逐个插入气球
             int n = (int)nums.size();
             val.resize(n + 2);
             for (int i = 1; i <= n; i++) {
@@ -999,8 +999,317 @@ namespace LC{
             val[0] = val[n + 1] = 1;
             rec.resize(n + 2, vector<int>(n + 2, -1));
             return solve(0, n + 1);
+
+            //方法２动态规划
+            vector<int> balloons(n + 2, 1);
+            copy(nums.begin(), nums.end(), balloons.begin() + 1);
+            vector<vector<int>> dp(n + 2, vector<int>(n + 2, 0));
+
+            for (int i = n-1; i >= 0; --i) {
+                for (int j = i + 2; j < n + 2; j++) {
+                    for (int k = i + 1; k < j; ++k) {
+                        //最后一个气球为Ｋ
+                        dp[i][j] = std::max(dp[i][j], dp[i][k] + dp[k][j] + balloons[i] * balloons[k] * balloons[j]);
+                    }
+                }
+            }
+
+            return dp[0][n+1];
+
         }
     };
+
+    /**
+     * description:输入：text1 = "abcde", text2 = "ace"
+     * 输出：3
+     * 解释：最长公共子序列是 "ace" ，它的长度为 3 。
+     * @date 4/10 1153
+     */
+    class SolutionCommonSubsequence {
+    public:
+        int longestCommonSubsequence(string text1, string text2) {
+            int n1 = (int) text1.length();
+            int n2 = (int) text2.length();
+
+            vector<vector<int>> dp(n1 + 1, vector<int>(n2 + 1, 0));
+
+            for (int i = 0; i < n1; ++i) {
+                char c1 = text1[i];
+                for (int j = 0; j < n2; ++j) {
+                    char c2 = text2[j];
+                    if (c1 == c2) {
+                        dp[i + 1][j + 1] = dp[i][j] + 1;
+                    } else {
+                        dp[i + 1][j + 1] = std::max(dp[i][j + 1], dp[i + 1][j]);
+                    }
+                }
+            }
+            return dp[n1][n2];
+        }
+    };
+
+    /**
+     * description:最长重复子串
+     */
+    string dpLRS(string s)
+    {
+        int n = (int)s.length();
+        vector<vector<int>>dp(n+1,vector<int>(n+1,0));
+        int max{-1};
+        string ans;
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = i+1; j < n; ++j) {
+                if (s[i] == s[j])
+                {
+                    dp[i+1][j+1] = dp[i][j]+1;
+                }else{
+                    dp[i + 1][j + 1] = std::max(dp[i][j + 1], dp[i + 1][j]);
+                }
+
+                max = std::max(max,dp[i+1][j+1]);
+            }
+        }
+
+        cout<<ans<<endl;
+        cout<<"longstring: "<<dp[n][n]<<endl;getchar();
+    }
+
+    /**
+     * description:地下城游戏
+     * @date 4/18 1446
+     */
+    class SolutionMinimumHP {
+    public:
+        int calculateMinimumHP(vector <vector<int>> dungeon) {
+            int m = (int) dungeon.size();
+            int n = (int) dungeon[0].size();
+
+            vector<vector<int>> dp(m + 1, vector<int>(n + 1, INT_MAX));
+            dp[m][n - 1] = dp[m - 1][n] = 1;
+
+            for (int i = m - 1; i >= 0; --i) {
+                for (int j = n - 1; j >= 0; --j) {
+                    dp[i][j] = max(min(dp[i + 1][j], dp[i][j + 1]) - dungeon[i][j], 1);
+                }
+            }
+
+            return dp[0][0];
+        }
+    };
+
+    /**
+     * description:给你两个字符串 s 和 t ，统计并返回在 s 的 子序列 中 t 出现的个数。
+     * @date 4/19 1018
+     */
+    class SolutionNumDistinct {
+    public:
+        int numDistinct(string s, string t) {
+            int m = (int) s.length();
+            int n = (int) t.length();
+
+            if (m < n) return 0;
+
+            vector<vector<size_t>> dp(m + 1, vector<size_t>(n + 1, 0));
+            for (int i = 0; i < m + 1; ++i) {
+                dp[i][0] = 1;
+            }
+
+            for (int i = 1; i <= m; ++i) {
+                for (int j = 1; j <= n; ++j) {
+                    if (s[i] == t[j]) {
+                        dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j];
+                    } else {
+                        dp[i][j] = dp[i - 1][j];
+                    }
+                }
+            }
+
+            return (int)dp[m][n];
+        }
+    };
+
+    class NumDecodings {
+    public:
+        static int numDecodings(const string& s) {
+            int n = (int) s.length();
+            vector<int> dp(n, 0);
+            dp[0] = (s[0] == '0') ? 0 : 1;
+
+            for (int i = 1; i < n; ++i) {
+                auto val = stoi(string{s[i - 1]}) * 10 + stoi(string{s[i]});
+                //单独一位0不能解码;s[i]值至少从1开始
+                if (s[i] != '0') {
+                    dp[i] += dp[i - 1];
+                }
+
+                if (val <= 26 and s[i - 1] != '0') {
+                    //(i > 1)加哨兵 dp[-1]代替这行: if (i == 1) dp[i] += 1;
+                    if (i == 1) dp[i] += 1;
+                    else dp[i] += dp[i - 2];
+                }
+            }
+
+            return dp[n-1];
+        }
+
+    };
+
+    /**
+     * description:输入：s = "1*" 输出：18
+     * 这一条编码消息可以表示 "11"、"12"、"13"、"14"、"15"、"16"、"17"、"18" 或 "19" 中的任意一条。
+     * @date 4/22 1708
+     */
+    class NumDecodings1 {
+        static constexpr int mod = 1000000007;
+    public:
+        static int numDecodings(string s){
+            int n = (int) s.length();
+            vector<size_t> dp(n+1, 0);
+            dp[0] = 1;
+
+            auto oneChar = [](char c){
+                if (c == '0') return 0;
+                if (c == '*') return 9;
+                return 1;
+            };
+
+            auto twoChars = [](char a, char b) {
+                if (a == '*' and b == '*') return 15;
+                if (a == '*') return b <= '6' ? 2 : 1;
+
+                if (b == '*') {
+                    if (a == '1') return 9;
+                    if (a == '2') return 6;
+                    return 0;
+                }
+
+                return (int)(((a - '0') * 10 + b - '0') <= 26 && a != '0');
+            };
+
+            int a = 0, b = 1, c = 0;
+            for (int i = 1; i <= n; ++i) {
+
+                auto c1 =  s[i-1];
+                dp[i] = (dp[i] + oneChar(c1)*dp[i - 1])%mod;
+
+                if (i>1){
+                    auto c2 = s[i-2];
+                    dp[i] = (dp[i] + twoChars(c2,c1)*dp[i - 2])%mod;
+                }
+            }
+
+            return (int)dp[n];
+        }
+    };
+
+    /**
+     * description:给定两个字符串s1 和 s2，返回 使两个字符串相等所需删除字符的 ASCII 值的最小和
+     * 输入: s1 = "sea", s2 = "eat"输出: 231
+     * 解释: 在 "sea" 中删除 "s" 并将 "s" 的值(115)加入总和。在 "eat" 中删除 "t" 并将 116 加入总和
+     * 结束时，两个字符串相等，115 + 116 = 231 就是符合条件的最小和。
+     * @date 4/23 1638
+     */
+    class MinimumDeleteSum {
+    public:
+        static int minimumDeleteSum(string s1, string s2) {
+            int m = (int) s1.length();
+            int n = (int) s2.length();
+
+            vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+
+            for (int i = 1; i < m + 1; ++i) {
+                dp[i][0] = dp[i - 1][0] + s1[i - 1];
+            }
+
+            for (int i = 1; i < n + 1; ++i) {
+                dp[0][i] = dp[0][i - 1] + s2[i - 1];
+            }
+
+            for (int i = 1; i < m + 1; ++i) {
+                for (int j = 1; j < n + 1; ++j) {
+                    if (s1[i - 1] == s2[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    } else {
+                        dp[i][j] = std::min(dp[i - 1][j] + s1[i - 1], dp[i][j - 1] + s2[j - 1]);
+                    }
+                }
+            }
+
+            return dp[m][n];
+        }
+    };
+
+    /**
+     * description:在一个由 '0' 和 '1' 组成的二维矩阵内，找到只包含 '1' 的最大正方形，并返回其面积。
+     * 输入：matrix = [["1","0","1","0","0"],["1","0","1","1","1"],["1","1","1","1","1"],["1","0","0","1","0"]]
+     * 输出：4
+     * @date 4/26 1142
+     */
+    class MaximalSquare {
+    public:
+        static int maximalSquare(vector <vector<char>> &matrix) {
+            int m = (int) matrix.size();
+            int n = (int) matrix[0].size();
+
+            vector<vector<int>> dp(m, vector<int>(n));
+
+            int max{-1};
+            for (int i = 0; i < m; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    if (i == 0 or j == 0) {
+                        dp[i][j] = matrix[i][j] - '0';
+                        max = std::max(max, dp[i][j]);
+                        continue;
+                    }
+
+                    dp[i][j] = matrix[i][j] == '1' ? std::min(min(dp[i][j - 1], dp[i - 1][j]), dp[i - 1][j - 1]) + 1 : 0;
+                    max = std::max(max, dp[i][j]);
+                }
+            }
+
+            return max * max;
+        }
+    };
+
+    /**
+     * 输入：matrix =
+     * [[0,1,1,1],
+     * [1,1,1,1],
+     * [0,1,1,1]]
+     * 输出：15
+     * 边长为 1 的正方形有 10 个;边长为 2 的正方形有 4 个;边长为 3 的正方形有 1 个
+     * 正方形的总数 = 10 + 4 + 1 = 15*/
+    class CountSquares {
+    public:
+        static int countSquares(vector<vector<int>>& matrix) {
+            int m = (int) matrix.size();
+            int n = (int) matrix[0].size();
+            int sum{0};;
+
+            vector<vector<int>> dp(m, vector<int>(n));
+            for (int i = 0; i < m; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    if (matrix[i][j] == 1) {
+                        if (i == 0 or j == 0) dp[i][j] = 1;
+                        else {
+                            dp[i][j] = min(min(dp[i - 1][j], dp[i][j - 1]), dp[i - 1][j - 1]) + 1;
+                        }
+                        sum += dp[i][j];
+                    }
+                }
+            }
+
+            return sum;
+        }
+    };
+
+     /* description:输入：[1,2,3,1]
+      * [2,7,9,3,1]
+     * 输出：4
+     * 偷窃 1 号房屋 (金额 = 1) ，然后偷窃 3 号房屋 (金额 = 3)。
+     * 偷窃到的最高金额 = 1 + 3 = 4 。
+     * @date 4 28 /1635*/
 
 
     void run(){
@@ -1128,9 +1437,38 @@ namespace LC{
         //输出：167
         //nums = [3,1,5,8] --> [3,5,8] --> [3,8] --> [8] --> []
         //coins =  3*1*5    +   3*5*8   +  1*3*8  + 1*8*1 = 167
+        //戳气球
+        //SolutionMaxCoins sm;
+        //cout<<"maxCoins: "<<sm.maxCoins(vector<int>{3,1,5,8});
 
-        SolutionMaxCoins sm;
-        sm.maxCoins(vector<int>{3,1,5,8});
+        //最长公共子序列
+        //SolutionCommonSubsequence sc;
+        //cout<<"long subs: "<<sc.longestCommonSubsequence("abcded","ace");
+
+        //输入：dungeon = [[-2,-3,3],[-5,-10,1],[10,30,-5]]
+        //输出：7
+       //SolutionMinimumHP sm;
+       //cout<<"minHp: "<<sm.calculateMinimumHP(vector<vector<int>>{{{-2,-3,3}, {-5,-10,1},{10,30,-5}}})<<endl;
+
+        //输入：s = "rabbbit", t = "rabbit"
+        //输出：3
+        //SolutionNumDistinct sn;
+        //auto s = "rabbbit", t = "rabbit";
+        //cout<<"minDistinct: "<<sn.numDistinct(s,t);
+
+        //输入：s = "12"
+        //输出：2
+        //解释：它可以解码为 "AB"（1 2）或者 "L"（12）。
+        //cout<<"num decode: "<<NumDecodings1::numDecodings("104")<<endl;
+
+        //auto s = "delete", t = "leet";
+        //cout<<"min delte: "<<MinimumDeleteSum::minimumDeleteSum(s,t)<<endl;
+
+        //vector<vector<char>>matrix{{'1','0','1','0','0'},{'1','0','1','1','1'},{'1','1','1','1','1'},{'1','0','0','1','0'}};
+        //vector<vector<int>>matrixi{{1,0,1,0,0},{1,0,1,1,1},{1,1,1,1,1},{1,0,0,1,0}};
+        //cout<<"maxsquare: "<<MaximalSquare::maximalSquare(matrix)<<endl;
+        //cout<<"maxsquare: "<<CountSquares::countSquares(matrixi)<<endl;
+
     }
 
 }
